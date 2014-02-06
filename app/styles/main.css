@@ -1,27 +1,28 @@
 body {
-    background: #fafafa;
+  background: #fafafa;
 }
 
 .scroll-pane {
-    width: 320px;
-    height: 300px;
-    overflow-y: scroll;
-    border: 2px solid red;
+  margin-top: 20px;
+  width: 335px;
+  height: 300px;
+  overflow-y: scroll;
+  border: 2px solid red;
 }
 
 ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    position: relative;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
 }
 
 li {
-    position: absolute;
-    display: block;
-    border: 2px solid #eeeeee;
-    width: 100px;
-    height: 100px;
-    float: left;
+  position: absolute;
+  display: block;
+  border: 2px solid #eeeeee;
+  width: 100px;
+  height: 100px;
+  float: left;
 }
 
