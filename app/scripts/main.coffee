@@ -111,19 +111,17 @@ class fastScrolling.Views.ListView extends Backbone.View
     # Scrolling changed at least position with one row
     if Math.abs(@lastScrollTop - st) > @itemHeight
       @updateScroll()
-      @lastScrollTop = st
 
   updateScroll: ->
     st = @$el.scrollTop()
+    rowsOutOfView = Math.floor(st / @itemHeight)
     if st > @lastScrollTop # scrolling down
-      rowsOutOfView = Math.floor(st / @itemHeight)
-
       if rowsOutOfView - @rowOffset > 3 # need buffer update?
         @updateDownBuffer(rowsOutOfView)
     else
-      rowsOutOfView = Math.floor(st / @itemHeight)
       if rowsOutOfView - @rowOffset < 2 # need buffer update?
         @updateUpBuffer(rowsOutOfView)
+    @lastScrollTop = st
 
   updateDownBuffer: (rowsOutOfView) ->
     redrawFrom = rowsOutOfView - 2
