@@ -27,11 +27,12 @@ window.fastScrolling =
 
     c = new Backbone.Collection(data)
 
-    b = new @Views.FilterView
-      collection: c
-
     lv = new @Views.ListView
       collection: c
+
+    b = new @Views.FilterView
+      collection: c
+      listView: lv
 
     $('body').append b.render().$el
     $('body').append lv.$el
@@ -81,9 +82,27 @@ class fastScrolling.Views.ListView extends Backbone.View
       @models = @collection[0..10].concat(@collection[40..100])
       @render()
 
+    @on 'wide', =>
+      @changeWidth(640)
+
+    @on 'narrow', =>
+      @changeWidth(335)
+
     @listenTo @collection, 'stopFilter', =>
       @models = @collection.models
       @render()
+
+  changeWidth: (newWidth) ->
+    pr = @perRow
+    scrollP = @$el.scrollTop()
+
+    @$el.css('width', newWidth)
+    @renderInitialized = no
+    v.remove() for v in @views
+    @render()
+    newScroll = (pr / @perRow) * scrollP
+    @$el.scrollTop(newScroll)
+
 
   initRender: ->
     return if @renderInitialized
@@ -192,9 +211,18 @@ class fastScrolling.Views.FilterView extends Backbone.View
   events:
     'click .filter-on': 'startFilter'
     'click .filter-off': 'stopFilter'
+    'click .wide': 'wideView'
+    'click .narrow': 'narrowView'
+
+  initialize: ({ @listView }) ->
 
   render: ->
-    @$el.html('<button class="filter-on">Filter On</button><button class="filter-off">Filter Off</button>')
+    @$el.html(
+      '<button class="filter-on">Filter On</button>' +
+      '<button class="filter-off">Filter Off</button>' +
+      '<button class="wide">Wide</button>' +
+      '<button class="narrow">Narrow</button>'
+    )
     this
 
   startFilter: ->
@@ -202,6 +230,12 @@ class fastScrolling.Views.FilterView extends Backbone.View
 
   stopFilter: ->
     @collection.trigger('stopFilter')
+
+  wideView: ->
+    @listView.trigger('wide')
+
+  narrowView: ->
+    @listView.trigger('narrow')
 
 
 $ ->
