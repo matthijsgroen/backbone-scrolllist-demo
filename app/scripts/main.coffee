@@ -6,6 +6,9 @@ window.fastScrolling =
   init: ->
     'use strict'
 
+    # Simulate a large dataset, using images from lorempixel.com
+    #
+    # We use images to represente a list of luminaires as closely as possible
     data = []
     for category in [
         'abstract'
@@ -24,12 +27,12 @@ window.fastScrolling =
         ]
         for index in [0..100]
             data.push { index: (index % 10) + 1, category, at: data.length }
-
     c = new Backbone.Collection(data)
 
     lv = new @Views.ListView
       collection: c
 
+    # buttons to mimic filtering and width changes
     b = new @Views.FilterView
       collection: c
       listView: lv
@@ -39,7 +42,7 @@ window.fastScrolling =
     # Render so we can calculate the dimensions of the li.
     lv.render()
 
-loadedImages = []
+window.loadedImages = []
 
 class fastScrolling.Views.ItemView extends Backbone.View
   tagName: 'li'
@@ -48,7 +51,7 @@ class fastScrolling.Views.ItemView extends Backbone.View
 
   render: ->
     imageSrc = "http://lorempixel.com/100/100/#{@model.get('category')}/#{@model.get('index')}/i#{@model.get('at')}"
-    if _.contains(loadedImages, imageSrc)
+    if _.contains(window.loadedImages, imageSrc)
       @$el.html "<img src='#{imageSrc}' />"
     else
       # Delay loading of image to prevent image fetching backlog on fast scrolling
@@ -59,10 +62,15 @@ class fastScrolling.Views.ItemView extends Backbone.View
         setTimeout(
           ->
             $elm = $("li img[data-id=#{modelId}]")
-            $elm.attr('src', null)
-            $elm.attr('src', $elm.data('src'))
-            loadedImages.push($elm.data('src'))
-          300
+            if $elm.length > 0
+              img = new Image()
+              img.onload = ->
+                $elm = $("li img[data-id=#{modelId}]")
+                $elm.attr('src', null)
+                $elm.attr('src', $elm.data('src'))
+                loadedImages.push($elm.data('src'))
+              img.src = $elm.data('src')
+          400
         )
     this
 
