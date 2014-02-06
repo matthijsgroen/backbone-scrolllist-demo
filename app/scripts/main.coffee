@@ -27,8 +27,13 @@ window.fastScrolling =
 
     c = new Backbone.Collection(data)
 
+    b = new @Views.FilterView
+      collection: c
+
     lv = new @Views.ListView
-        collection: c
+      collection: c
+
+    $('body').append b.render().$el
     $('body').append lv.$el
     # Render so we can calculate the dimensions of the li.
     lv.render()
@@ -69,9 +74,22 @@ class fastScrolling.Views.ListView extends Backbone.View
   events:
     'scroll': 'updateViews'
 
-  render: ->
-    @$el.html('<ul></ul>')
-    @views = [new fastScrolling.Views.ItemView(model: @collection.at(0))]
+  initialize: ->
+    @models = @collection.models
+
+    @listenTo @collection, 'startFilter', =>
+      @models = @collection[0..10].concat(@collection[40..100])
+      @render()
+
+    @listenTo @collection, 'stopFilter', =>
+      @models = @collection.models
+      @render()
+
+  initRender: ->
+    return if @renderInitialized
+    @renderInitialized = yes
+
+    @views = [new fastScrolling.Views.ItemView(model: @models[0])]
     @$('ul').append(@views[0].render().el)
     maxWidth = @$el.width()
     maxHeight = @$el.height()
@@ -84,13 +102,24 @@ class fastScrolling.Views.ListView extends Backbone.View
 
     amountViews = @amountRows * @perRow
 
-    for model in @collection.models[1...amountViews]
-      @views.push(new fastScrolling.Views.ItemView(model: model))
+    for model in @models[1...amountViews]
+      @views.push(new fastScrolling.Views.ItemView(model: model).render())
 
-    elements = (v.render().el for v in @views)
+  render: ->
+    @$el.html('<ul></ul>')
+    @$el.scrollTop(0)
+    @lastScrollTop = 0
+    @rowOffset = 0
+    @initRender()
+
+    for view, index in @views
+      if view.model.cid isnt @models[index].cid
+        view.model = @models[index]
+        view.render()
+
+    elements = (v.el for v in @views)
     @$('ul').append(elements)
-
-    @$('ul').height(Math.ceil(@collection.length / @perRow) * @itemHeight)
+    @$('ul').height(Math.ceil(@models.length / @perRow) * @itemHeight)
 
     if (@perRow > 1)
       @$("ul li:nth-child(#{@perRow}n)").css(left: (@itemWidth * (@perRow - 1)))
@@ -100,12 +129,9 @@ class fastScrolling.Views.ListView extends Backbone.View
     for v, index in @views
       row = Math.floor(index / @perRow)
       v.$el.css(top: (row * @itemHeight))
-
     this
 
   updateViews: ->
-    @lastScrollTop ||= 0
-    @rowOffset ||= 0
     st = @$el.scrollTop()
 
     # Scrolling changed at least position with one row
@@ -154,12 +180,29 @@ class fastScrolling.Views.ListView extends Backbone.View
     @rowOffset += catchUp
 
   renderItem: (view, modelIndex) ->
-    if modelIndex < @collection.length and modelIndex >= 0
+    if modelIndex < @models.length and modelIndex >= 0
       newTop = (Math.floor(modelIndex / @perRow)) * @itemHeight
       newLeft = (modelIndex % @perRow) * @itemWidth
       view.$el.css(top: newTop, left: newLeft)
-      view.model = @collection.at(modelIndex)
+      view.model = @models[modelIndex]
       view.render()
+
+class fastScrolling.Views.FilterView extends Backbone.View
+
+  events:
+    'click .filter-on': 'startFilter'
+    'click .filter-off': 'stopFilter'
+
+  render: ->
+    @$el.html('<button class="filter-on">Filter On</button><button class="filter-off">Filter Off</button>')
+    this
+
+  startFilter: ->
+    @collection.trigger('startFilter')
+
+  stopFilter: ->
+    @collection.trigger('stopFilter')
+
 
 $ ->
   'use strict'
