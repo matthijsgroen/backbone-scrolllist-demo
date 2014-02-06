@@ -5,7 +5,7 @@ body {
 .scroll-pane {
   margin-top: 20px;
   width: 335px;
-  height: 300px;
+  height: 600px;
   overflow-y: scroll;
   border: 2px solid red;
 }

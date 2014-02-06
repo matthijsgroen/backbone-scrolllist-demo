@@ -69,31 +69,33 @@ class fastScrolling.Views.ListView extends Backbone.View
   events:
     'scroll': 'updateViews'
 
-  initialize: ->
-    @views = []
-    for model in @collection.models[0...30]
-      v = new fastScrolling.Views.ItemView(model: model)
-      @views.push v
-
   render: ->
     @$el.html('<ul></ul>')
-    # resize ul to match height of all items
-    elements = (v.render().el for v in @views)
-    @$('ul').append(elements)
-
+    @views = [new fastScrolling.Views.ItemView(model: @collection.at(0))]
+    @$('ul').append(@views[0].render().el)
     maxWidth = @$el.width()
-
+    maxHeight = @$el.height()
     $li = @$('ul li:first')
 
     @itemHeight = $li.outerHeight()
     @itemWidth = $li.outerWidth()
     @perRow = Math.floor(maxWidth / @itemWidth)
-    @amountRows = @views.length / @perRow
+    @amountRows = (Math.ceil(maxHeight / @itemHeight) + 6)
+
+    amountViews = @amountRows * @perRow
+
+    for model in @collection.models[1...amountViews]
+      @views.push(new fastScrolling.Views.ItemView(model: model))
+
+    elements = (v.render().el for v in @views)
+    @$('ul').append(elements)
 
     @$('ul').height(Math.ceil(@collection.length / @perRow) * @itemHeight)
 
-    @$('ul li:nth-child(3n+2)').css(left: (@itemWidth * 1))
-    @$('ul li:nth-child(3n)').css(left: (@itemWidth * 2))
+    if (@perRow > 1)
+      @$("ul li:nth-child(#{@perRow}n)").css(left: (@itemWidth * (@perRow - 1)))
+    for i in [1...@perRow - 1]
+      @$("ul li:nth-child(#{@perRow}n+#{1 + i})").css(left: (@itemWidth * i))
 
     for v, index in @views
       row = Math.floor(index / @perRow)
@@ -110,7 +112,6 @@ class fastScrolling.Views.ListView extends Backbone.View
     if Math.abs(@lastScrollTop - st) > @itemHeight
       @updateScroll()
       @lastScrollTop = st
-
 
   updateScroll: ->
     st = @$el.scrollTop()
