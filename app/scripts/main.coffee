@@ -139,23 +139,11 @@ class fastScrolling.Views.ListView extends Backbone.View
     @rowOffset = 0
     @initRender()
 
-    for view, index in @views
-      if view.model.cid isnt @models[index].cid
-        view.model = @models[index]
-        view.render()
-
     elements = (v.el for v in @views)
     @$('ul').append(elements)
     @$('ul').height(Math.ceil(@models.length / @perRow) * @itemHeight)
-
-    if (@perRow > 1)
-      @$("ul li:nth-child(#{@perRow}n)").css(left: (@itemWidth * (@perRow - 1)))
-    for i in [1...@perRow - 1]
-      @$("ul li:nth-child(#{@perRow}n+#{1 + i})").css(left: (@itemWidth * i))
-
-    for v, index in @views
-      row = Math.floor(index / @perRow)
-      v.$el.css(top: (row * @itemHeight))
+    for view, index in @views
+      @renderItem(view, index)
     this
 
   updateViews: ->
@@ -210,9 +198,12 @@ class fastScrolling.Views.ListView extends Backbone.View
     if modelIndex < @models.length and modelIndex >= 0
       newTop = (Math.floor(modelIndex / @perRow)) * @itemHeight
       newLeft = (modelIndex % @perRow) * @itemWidth
+
       view.$el.css(top: newTop, left: newLeft)
-      view.model = @models[modelIndex]
-      view.render()
+
+      if view.model.cid isnt @models[modelIndex].cid
+        view.model = @models[modelIndex]
+        view.render()
 
 class fastScrolling.Views.FilterView extends Backbone.View
 
